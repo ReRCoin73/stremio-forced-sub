@@ -81,6 +81,11 @@ async function getDownloadLink(env, fileId) {
   return { status, link: data && data.link, raw: data };
 }
 
+async function getUserInfo(env) {
+  const { status, data } = await osFetch(env, '/infos/user');
+  return { status, data: data && data.data };
+}
+
 function parseSubtitlesPath(path) {
   const m = path.match(/^\/subtitles\/(movie|series)\/([^/]+)\.json$/);
   if (!m) return null;
@@ -101,6 +106,11 @@ export default {
       return new Response('Stremio Forced Sub (IT) addon. Use /manifest.json no Stremio.', {
         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
+    }
+
+    if (path === '/quota') {
+      const info = await getUserInfo(env);
+      return jsonResponse(info);
     }
 
     if (path === '/manifest.json') {
@@ -145,15 +155,18 @@ export default {
       try {
         const { forced } = await searchForcedItalian(env, parsed.imdbId, parsed.season, parsed.episode);
         const subtitles = [];
+        const downloadIssues = [];
         for (let i = 0; i < Math.min(forced.length, 3); i++) {
           const files = forced[i].attributes.files || [];
           if (!files.length) continue;
-          const { link } = await getDownloadLink(env, files[0].file_id);
+          const { link, raw } = await getDownloadLink(env, files[0].file_id);
           if (link) {
             subtitles.push({ id: `forced-it-${i}`, url: link, lang: 'ita' });
+          } else {
+            downloadIssues.push(raw);
           }
         }
-        return jsonResponse({ subtitles });
+        return jsonResponse({ subtitles, downloadIssues: subtitles.length ? undefined : downloadIssues });
       } catch (e) {
         return jsonResponse({ subtitles: [], error: String(e) });
       }
