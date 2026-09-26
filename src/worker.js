@@ -87,14 +87,16 @@ async function getUserInfo(env) {
 }
 
 function parseSubtitlesPath(path) {
-  const m = path.match(/^\/subtitles\/(movie|series)\/([^/]+)\.json$/);
+  // Aceita tanto /subtitles/tipo/id.json quanto /subtitles/tipo/id/extra.json
+  // (clientes mais novos do Stremio costumam sempre mandar o "extra")
+  const m = path.match(/^\/subtitles\/(movie|series)\/([^/]+?)(?:\/[^/]+)?\.json$/);
   if (!m) return null;
   const [, type, rawId] = m;
   if (type === 'series') {
-    const [imdbId, season, episode] = rawId.split(':');
+    const [imdbId, season, episode] = decodeURIComponent(rawId).split(':');
     return { type, imdbId, season, episode };
   }
-  return { type, imdbId: rawId };
+  return { type, imdbId: decodeURIComponent(rawId) };
 }
 
 export default {
