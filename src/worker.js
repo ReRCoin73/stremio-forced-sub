@@ -150,6 +150,35 @@ export default {
       });
     }
 
+    // Diagnostico completo: /checksub?imdb=tt0944947&season=1&episode=8
+    if (path === '/checksub') {
+      const imdbId = url.searchParams.get('imdb');
+      const season = url.searchParams.get('season');
+      const episode = url.searchParams.get('episode');
+      if (!imdbId) return jsonResponse({ error: 'passe ?imdb=tt...' }, 400);
+      const { forced } = await searchForcedItalian(env, imdbId, season, episode);
+      if (!forced.length) return jsonResponse({ error: 'nenhuma forced encontrada pra esse id' });
+      const files = forced[0].attributes.files || [];
+      if (!files.length) return jsonResponse({ error: 'item forced sem arquivo' });
+      const { link, raw } = await getDownloadLink(env, files[0].file_id);
+      if (!link) return jsonResponse({ step: 'download', ok: false, raw });
+      try {
+        const subRes = await fetch(link);
+        const text = await subRes.text();
+        return jsonResponse({
+          step: 'fetch-subtitle',
+          downloadLink: link,
+          fetchStatus: subRes.status,
+          fetchOk: subRes.ok,
+          contentType: subRes.headers.get('content-type'),
+          contentLength: text.length,
+          preview: text.slice(0, 300)
+        });
+      } catch (e) {
+        return jsonResponse({ step: 'fetch-subtitle', ok: false, error: String(e) });
+      }
+    }
+
     if (path === '/sub.srt') {
       const src = url.searchParams.get('src');
       if (!src) return new Response('missing src', { status: 400 });
