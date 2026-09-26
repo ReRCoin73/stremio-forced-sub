@@ -21,9 +21,9 @@ function jsonResponse(obj, status = 200) {
   });
 }
 
-async function searchSubdl(env, imdbId, season, episode) {
+async function searchSubdlRaw(env, imdbId, season, episode) {
   const params = new URLSearchParams({
-    api_key: env.SUBDL_API_KEY,
+    api_key: env.SUBDL_API_KEY || '',
     imdb_id: imdbId,
     languages: 'IT',
     subs_per_page: '30'
@@ -35,8 +35,14 @@ async function searchSubdl(env, imdbId, season, episode) {
   } else {
     params.set('type', 'movie');
   }
-  const res = await fetch(`https://api.subdl.com/api/v1/subtitles?${params.toString()}`);
+  const requestUrl = `https://api.subdl.com/api/v1/subtitles?${params.toString()}`;
+  const res = await fetch(requestUrl);
   const data = await res.json();
+  return { httpStatus: res.status, data, requestUrl: requestUrl.replace(/api_key=[^&]+/, 'api_key=HIDDEN') };
+}
+
+async function searchSubdl(env, imdbId, season, episode) {
+  const { data } = await searchSubdlRaw(env, imdbId, season, episode);
   if (!data.status) return [];
   return data.subtitles || [];
 }
@@ -61,6 +67,22 @@ export default {
 
     if (path === '/manifest.json') {
       return jsonResponse(MANIFEST);
+    }
+
+    // Endpoint temporario de diagnostico: /debug?imdb=tt0944947&season=1&episode=1
+    if (path === '/debug') {
+      const imdbId = url.searchParams.get('imdb');
+      const season = url.searchParams.get('season');
+      const episode = url.searchParams.get('episode');
+      if (!imdbId) return jsonResponse({ error: 'passe ?imdb=tt...' }, 400);
+      const hasKey = Boolean(env.SUBDL_API_KEY);
+      const raw = await searchSubdlRaw(env, imdbId, season, episode);
+      const subs = (raw.data.subtitles || []).map((s) => ({
+        release_name: s.release_name,
+        name: s.name,
+        url: s.url
+      }));
+      return jsonResponse({ hasKey, ...raw, subsCount: subs.length, subs });
     }
 
     // /subtitles/movie/tt1234567.json
