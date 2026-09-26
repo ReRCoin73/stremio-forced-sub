@@ -6,7 +6,7 @@ const MANIFEST = {
   resources: ['subtitles'],
   types: ['movie', 'series'],
   catalogs: [],
-  idPrefixes: ['tt']
+  idPrefixes: ['tt'],
   logo: 'https://raw.githubusercontent.com/ReRCoin73/stremio-forced-sub/main/logo.png'
 };
 
