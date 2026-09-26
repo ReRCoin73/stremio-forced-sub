@@ -1,9 +1,6 @@
 {
   "name": "stremio-forced-sub",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Addon Stremio de legenda forced em italiano, para Samsung TV Tizen",
-  "dependencies": {
-    "fflate": "^0.8.2"
-  }
+  "description": "Addon Stremio de legenda forced em italiano (via OpenSubtitles), para Samsung TV Tizen"
 }
