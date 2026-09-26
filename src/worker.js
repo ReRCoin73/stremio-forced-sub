@@ -150,6 +150,24 @@ export default {
       });
     }
 
+    if (path === '/sub.srt') {
+      const src = url.searchParams.get('src');
+      if (!src) return new Response('missing src', { status: 400 });
+      try {
+        const subRes = await fetch(src);
+        const text = await subRes.text();
+        return new Response(text, {
+          headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'no-store'
+          }
+        });
+      } catch (e) {
+        return new Response('error fetching subtitle: ' + e.message, { status: 500 });
+      }
+    }
+
     const parsed = parseSubtitlesPath(path);
     if (parsed) {
       try {
@@ -161,7 +179,8 @@ export default {
           if (!files.length) continue;
           const { link, raw } = await getDownloadLink(env, files[0].file_id);
           if (link) {
-            subtitles.push({ id: `forced-it-${i}`, url: link, lang: 'ita' });
+            const proxyUrl = `${url.origin}/sub.srt?src=${encodeURIComponent(link)}`;
+            subtitles.push({ id: `forced-it-${i}`, url: proxyUrl, lang: 'ita' });
           } else {
             downloadIssues.push(raw);
           }
