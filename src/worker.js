@@ -7,6 +7,7 @@ const MANIFEST = {
   types: ['movie', 'series'],
   catalogs: [],
   idPrefixes: ['tt']
+  logo: 'https://raw.githubusercontent.com/ReRCoin73/stremio-forced-sub/main/logo.png'
 };
 
 function jsonResponse(obj, status = 200) {
