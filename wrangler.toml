@@ -1,0 +1,7 @@
+name = "stremio-forced-sub"
+main = "src/worker.js"
+compatibility_date = "2026-09-26"
+
+# A SUBDL_API_KEY precisa ser configurada como secret no Cloudflare,
+# nunca deixada aqui em texto puro:
+#   wrangler secret put SUBDL_API_KEY
